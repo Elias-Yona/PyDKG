@@ -7,13 +7,13 @@ class Polynomial:
         self.degree = degree
 
     def coefficients(self):
-        c = list({_ for _ in range(self.degree+1)})
+        c = list({secrets.SystemRandom().random()
+                 for _ in range(self.degree+1)})
         secrets.SystemRandom().shuffle(c)
         return c
 
     def equation(self):
         c = self.coefficients()
-        print(c)
         return Poly(self.coefficients())
 
 
