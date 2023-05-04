@@ -18,8 +18,11 @@ class Polynomial:
 
 
 degree = 5  # polynomial degree
-polynomial_1 = Polynomial(degree).equation()
-polynomial_2 = Polynomial(degree).equation()
+polynomial1 = Polynomial(degree).equation()
+polynomial2 = Polynomial(degree).equation()
 
-print(polynomial_1)
-print(polynomial_2)
+random_value1 = polynomial1(0)
+random_value2 = polynomial2(0)
+
+print(random_value1)
+print(random_value2)
