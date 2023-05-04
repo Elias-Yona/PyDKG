@@ -4,17 +4,20 @@ from numpy.polynomial import Polynomial as Poly
 
 class Polynomial:
     def __init__(self, degree):
-        self.degree = degree
+        self._degree = degree
 
     def coefficients(self):
         c = list({secrets.SystemRandom().random()
-                 for _ in range(self.degree+1)})
+                 for _ in range(self._degree+1)})
         secrets.SystemRandom().shuffle(c)
         return c
 
     def equation(self):
         c = self.coefficients()
         return Poly(self.coefficients())
+
+    def __len__(self):
+        return len(self.coefficients)
 
 
 degree = 5  # polynomial degree
