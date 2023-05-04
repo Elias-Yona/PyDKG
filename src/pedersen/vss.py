@@ -13,11 +13,13 @@ class Polynomial:
         return c
 
     def equation(self):
-        c = self.coefficients()
         return Poly(self.coefficients())
 
     def __len__(self):
         return len(self.coefficients)
+
+    def __getitem__(self, idx):
+        return self.coefficients()[idx]
 
 
 degree = 5  # polynomial degree
@@ -29,3 +31,4 @@ random_value2 = polynomial2(0)
 
 print(random_value1)
 print(random_value2)
+print(polynomial1[0])
