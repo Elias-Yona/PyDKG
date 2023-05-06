@@ -84,7 +84,7 @@ class Vss:
             return False
 
         if not self.verify_share(s_ij, s_pij, C, i, g, h, p):
-            self.broadcast_complaint(i, s_ij, s_pij)
+            self.broadcast_complaint(i)
             print(f"Player {i} received a complaint")
             self.complaints[i] += 1
 
@@ -95,10 +95,18 @@ class Vss:
             return False
 
         return True
-    
+
     def get_non_disqualified_players(self, n):
         """Get a set of all non-disqualified players"""
         return set(range(1, n+1)) - self.disqualified
+
+    def compute_share_xi(self, s_ij, players, q):
+        """Compute the share xi for player i"""
+        xi = 0
+        for j in players:
+            p = pow(j, s_ij)
+            xi += p
+        return xi % q
 
 
 p = group.p
@@ -118,34 +126,31 @@ shares = dealer.get_shares(n, p)
 
 j = 2
 for i in range(1, n + 1):
-    s_ij, sp_ij = shares[i - 1]
     if i == 2:
+        continue
+    s_ij, sp_ij = shares[i - 1]
+
+    if i == 3:
         s_ij = 10
 
     is_verified = dealer.verify_share(
-        s_ij=s_ij, sp_ij=sp_ij, C_j=C, g=g, h=h, p=p,  j=j)
+        s_ij=s_ij, sp_ij=sp_ij, C_j=C, g=g, h=h, p=p,  j=i)
 
     if not is_verified:
         dealer.broadcast_complaint(i)
         print(f"Player {j} broadcasts a complaint against Player {i}")
+        dealer.handle_complaint(
+            i=i, s_ij=s_ij, s_pij=sp_ij, C=C, g=g, h=h, p=p)
 
+# compute x_i
+# compute x1
+s_ij0, s_pij0 = shares[0]
+non_disqualified_players = dealer.get_non_disqualified_players(n)
+x1 = dealer.compute_share_xi(s_ij=s_ij0, players=non_disqualified_players, q=p)
+print(f'x1 => {x1}')
 
-# Simulate a player with more than t complaints
-disqualified_player = 2
-for i in range(t+1):
-    dealer.handle_complaint(
-        disqualified_player, shares[disqualified_player-1][0], shares[disqualified_player-1][1], C, g, h, p)
-
-print(dealer.disqualified)
-
-# Player should be disqualified
-assert disqualified_player in dealer.disqualified
-
-# Simulate a player with less than t complaints
-player = 3
-for i in range(t-1):
-    dealer.handle_complaint(
-        player, shares[player-1][0], shares[player-1][1], C, g, h, p)
-
-# Player should not be disqualified
-assert player not in dealer.disqualified
+# compute x2
+s_ij1, s_pij1 = shares[1]
+non_disqualified_players = dealer.get_non_disqualified_players(n)
+x2 = dealer.compute_share_xi(s_ij=s_ij1, players=non_disqualified_players, q=p)
+print(f'x2 => {x2}')
