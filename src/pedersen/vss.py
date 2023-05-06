@@ -95,6 +95,10 @@ class Vss:
             return False
 
         return True
+    
+    def get_non_disqualified_players(self, n):
+        """Get a set of all non-disqualified players"""
+        return set(range(1, n+1)) - self.disqualified
 
 
 p = group.p
