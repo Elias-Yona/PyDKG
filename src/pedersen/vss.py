@@ -1,12 +1,11 @@
 from functools import cached_property
 from collections import defaultdict
 
-from utils import get_modulus
-from generate_groups import CyclicGroup
-from polynomials import Polynomial
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+import base64
 
-
-group = CyclicGroup(20)
+from .utils import get_modulus
+from .polynomials import Polynomial
 
 
 class Vss:
@@ -59,8 +58,6 @@ class Vss:
         for k in range(len(C_j)):
             rhs *= pow(int(C_j[k]), pow(j, k), p) % p
 
-        print(f'lhs={lhs}\nrhs={rhs % p}')
-
         # Check if the two sides are equal
         if lhs != rhs % p:
             return False
@@ -100,80 +97,41 @@ class Vss:
         """Get a set of all non-disqualified players"""
         return set(range(1, n+1)) - self.disqualified
 
-    def compute_share_xi(self, s_ij, players, q):
+    def compute_share_xi(self, s_ij, players, q, key, iv):
         """Compute the share xi for player i"""
         xi = 0
         for j in players:
             p = pow(j, s_ij)
             xi += p
-        return xi % q
+        plaintext = bytes(str(xi % q), encoding='utf-8')
+        block_size = 16
+        padding_length = block_size - len(plaintext) % block_size
+        padding = bytes([padding_length]) * padding_length
+        padded_message = plaintext + padding
+        return self.encrypt_share(key=key, iv=iv, plaintext=padded_message)
 
-    def compute_share_xi_prime(self, sp_ij, players, q):
+    def compute_share_xi_prime(self, sp_ij, players, q, key, iv):
         """Compute the share xi_prime for player i"""
         xi_prime = 0
         for j in players:
             p = pow(j, sp_ij)
             xi_prime += p
-        return xi_prime % q
 
+        plaintext = bytes(str(xi_prime % q), encoding='utf-8')
+        block_size = 16
+        padding_length = block_size - len(plaintext) % block_size
+        padding = bytes([padding_length]) * padding_length
+        padded_message = plaintext + padding
+        return self.encrypt_share(key=key, iv=iv, plaintext=padded_message)
 
-p = group.p
-h = group.h
-g = group.g
-t = 5
-n = 5
+    def encrypt_share(self, key, iv, plaintext):
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+        encryptor = cipher.encryptor()
+        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+        return ciphertext
 
-# Initialize the dealer
-dealer = Vss(degree=t)
-
-# Generate the commitment
-C = dealer.get_commitment(p=p, g=g, h=h)
-
-# Generate shares for n players
-shares = dealer.get_shares(n, p)
-
-j = 2
-for i in range(1, n + 1):
-    if i == 2:
-        continue
-    s_ij, sp_ij = shares[i - 1]
-
-    if i == 3:
-        s_ij = 10
-
-    is_verified = dealer.verify_share(
-        s_ij=s_ij, sp_ij=sp_ij, C_j=C, g=g, h=h, p=p,  j=i)
-
-    if not is_verified:
-        dealer.broadcast_complaint(i)
-        print(f"Player {j} broadcasts a complaint against Player {i}")
-        dealer.handle_complaint(
-            i=i, s_ij=s_ij, s_pij=sp_ij, C=C, g=g, h=h, p=p)
-
-# compute x_i
-# compute x1
-s_ij0, s_pij0 = shares[0]
-non_disqualified_players = dealer.get_non_disqualified_players(n)
-x1 = dealer.compute_share_xi(s_ij=s_ij0, players=non_disqualified_players, q=p)
-print(f'x1 => {x1}')
-
-# compute x2
-s_ij1, s_pij1 = shares[1]
-non_disqualified_players = dealer.get_non_disqualified_players(n)
-x2 = dealer.compute_share_xi(s_ij=s_ij1, players=non_disqualified_players, q=p)
-print(f'x2 => {x2}')
-
-# compute xi_prime
-# compute x1'
-s_ij0, s_pij0 = shares[0]
-non_disqualified_players = dealer.get_non_disqualified_players(n)
-x1_prime = dealer.compute_share_xi_prime(
-    sp_ij=s_pij0, players=non_disqualified_players, q=p)
-print(f'x1 prime=> {x1_prime}')
-
-# compute x2'
-s_ij1, s_pij1 = shares[1]
-non_disqualified_players = dealer.get_non_disqualified_players(n)
-x2_prime = dealer.compute_share_xi_prime(
-    sp_ij=s_pij1, players=non_disqualified_players, q=p)
-print(f'x2 prime => {x2_prime}')
+    def decrypt_share(self, key, iv, ciphertext):
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+        decryptor = cipher.decryptor()
+        plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+        return plaintext
