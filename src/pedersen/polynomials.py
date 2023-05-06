@@ -1,4 +1,5 @@
 import secrets
+from functools import cached_property
 
 from numpy.polynomial import Polynomial as Poly
 
@@ -7,15 +8,22 @@ class Polynomial():
     def __init__(self, degree: int) -> None:
         self._degree = degree
 
+    @cached_property
     def coefficients(self):
-        c = list({secrets.SystemRandom().random()
-                  for _ in range(self._degree+1)})
+        # c = list({int(secrets.SystemRandom().random()*100)
+        #           for _ in
+        # range(self._degree+1)})
+
+        c = []
+        for i in range(1, self._degree + 1):
+            r = secrets.randbelow(3) + 1
+            c.append(r)
+
         secrets.SystemRandom().shuffle(c)
         return c
 
-    def __call__(self, i):
-        eq = Poly(self.coefficients())
-        return eq(i)
+    def equation(self):
+        return Poly(self.coefficients)
 
     def __len__(self):
         return len(self.coefficients)
