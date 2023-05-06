@@ -108,6 +108,14 @@ class Vss:
             xi += p
         return xi % q
 
+    def compute_share_xi_prime(self, sp_ij, players, q):
+        """Compute the share xi_prime for player i"""
+        xi_prime = 0
+        for j in players:
+            p = pow(j, sp_ij)
+            xi_prime += p
+        return xi_prime % q
+
 
 p = group.p
 h = group.h
@@ -154,3 +162,18 @@ s_ij1, s_pij1 = shares[1]
 non_disqualified_players = dealer.get_non_disqualified_players(n)
 x2 = dealer.compute_share_xi(s_ij=s_ij1, players=non_disqualified_players, q=p)
 print(f'x2 => {x2}')
+
+# compute xi_prime
+# compute x1'
+s_ij0, s_pij0 = shares[0]
+non_disqualified_players = dealer.get_non_disqualified_players(n)
+x1_prime = dealer.compute_share_xi_prime(
+    sp_ij=s_pij0, players=non_disqualified_players, q=p)
+print(f'x1 prime=> {x1_prime}')
+
+# compute x2'
+s_ij1, s_pij1 = shares[1]
+non_disqualified_players = dealer.get_non_disqualified_players(n)
+x2_prime = dealer.compute_share_xi_prime(
+    sp_ij=s_pij1, players=non_disqualified_players, q=p)
+print(f'x2 prime => {x2_prime}')
