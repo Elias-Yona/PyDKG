@@ -71,3 +71,6 @@ key = b'supersecretkey04'
 x2_prime = dealer.compute_share_xi_prime(
     sp_ij=s_pij1, players=non_disqualified_players, q=p, key=key, iv=iv)
 print(f'x2 prime => {x2_prime}')
+
+encrypted_x2 = dealer.decrypt_share(key=key, iv=iv, ciphertext=x2_prime)
+print(encrypted_x2)

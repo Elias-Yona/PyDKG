@@ -2,6 +2,7 @@ from functools import cached_property
 from collections import defaultdict
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
 import base64
 
 from .utils import get_modulus
@@ -104,11 +105,7 @@ class Vss:
             p = pow(j, s_ij)
             xi += p
         plaintext = bytes(str(xi % q), encoding='utf-8')
-        block_size = 16
-        padding_length = block_size - len(plaintext) % block_size
-        padding = bytes([padding_length]) * padding_length
-        padded_message = plaintext + padding
-        return self.encrypt_share(key=key, iv=iv, plaintext=padded_message)
+        return self.encrypt_share(key=key, iv=iv, plaintext=plaintext)
 
     def compute_share_xi_prime(self, sp_ij, players, q, key, iv):
         """Compute the share xi_prime for player i"""
@@ -118,20 +115,25 @@ class Vss:
             xi_prime += p
 
         plaintext = bytes(str(xi_prime % q), encoding='utf-8')
+        return self.encrypt_share(key=key, iv=iv, plaintext=plaintext)
+
+    def encrypt_share(self, key, iv, plaintext):
         block_size = 16
         padding_length = block_size - len(plaintext) % block_size
         padding = bytes([padding_length]) * padding_length
         padded_message = plaintext + padding
-        return self.encrypt_share(key=key, iv=iv, plaintext=padded_message)
-
-    def encrypt_share(self, key, iv, plaintext):
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         encryptor = cipher.encryptor()
-        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
-        return ciphertext
+        ciphertext = encryptor.update(padded_message) + encryptor.finalize()
+        return base64.b64encode(ciphertext,)
 
     def decrypt_share(self, key, iv, ciphertext):
+        block_size = 16
+        ciphertext = base64.b64decode(ciphertext)
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         decryptor = cipher.decryptor()
         plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-        return plaintext
+        unpadder = padding.PKCS7(block_size * 8).unpadder()
+        data_without_padding = unpadder.update(
+            plaintext) + unpadder.finalize()
+        return data_without_padding.decode()
