@@ -137,3 +137,31 @@ class Vss:
         data_without_padding = unpadder.update(
             plaintext) + unpadder.finalize()
         return data_without_padding.decode()
+
+    def broadcast_Aik(self, players, g, p):
+        a = self.f.coefficients
+        Aik = []
+        for i in range(players):
+            Aik_i = []
+            for k in range(1, self.degree + 1):
+                aik = pow(g, a[i]*k) % p
+                Aik_i.append(aik)
+            Aik.append(Aik_i)
+        return Aik
+
+    def verify_Aik(self, j, g, s_ij, Aiks, p):
+        # Compute the left-hand side of the equation
+        lhs = pow(g, int(s_ij), p) % p
+
+        # Compute the right-hand side of the equation
+        rhs = 1
+        for k in range(self.degree):
+            rhs *= pow(int(Aiks[k]), pow(j, k), p) % p
+
+        print(f'lhs => {lhs}\nrhs => {rhs % p}')
+
+        # Check if the two sides are equal
+        if lhs != rhs % p:
+            return False
+
+        return True

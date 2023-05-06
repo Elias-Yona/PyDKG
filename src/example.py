@@ -72,5 +72,10 @@ x2_prime = dealer.compute_share_xi_prime(
     sp_ij=s_pij1, players=non_disqualified_players, q=p, key=key, iv=iv)
 print(f'x2 prime => {x2_prime}')
 
-encrypted_x2 = dealer.decrypt_share(key=key, iv=iv, ciphertext=x2_prime)
-print(encrypted_x2)
+# encrypted_x2 = dealer.decrypt_share(key=key, iv=iv, ciphertext=x2_prime)
+# print(encrypted_x2)
+
+Aiks = dealer.broadcast_Aik(g=g, players=n, p=p)
+j = 1
+verified = dealer.verify_Aik(j=j, g=g, Aiks=Aiks[1], p=p, s_ij=s_ij1)
+print(verified)
